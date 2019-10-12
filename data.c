@@ -1,8 +1,6 @@
 #include <string.h>
 #include "lisp.h"
 
-static Element clone(const Element);
-
 /*
 Should return Element for closure property.
 

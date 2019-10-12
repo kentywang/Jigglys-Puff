@@ -94,6 +94,7 @@ extern Element make_list(const Pair *);
 extern Element make_cons(const Element, const Element);
 extern Element car(const Element);
 extern Element cdr(const Element);
+extern Element clone(const Element);
 extern Boolean is_true(const Element);
 
 /* env.c */

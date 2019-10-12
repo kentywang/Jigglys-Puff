@@ -36,7 +36,6 @@ apple
 (define cons
   (lambda (x y)
     (lambda (m) (m x y))))
-
 (define car
   (lambda (z)
     (z (lambda (p q) p))))
@@ -78,18 +77,25 @@ apple
 - Add option to trigger GC on every REPL cycle.
 - Does my approach GC the input AST if we have a non-procedure application
   pair?
+- How can we preserve local variable (both from arguments and manually-
+  defined) references across GCs?
 
 ### Garbage Collection
 There's 5 classes of data on the heap with varying lifespans:
-- global environment (persistent)
+- global environment (persistent) [x]
 - input AST (from creation on read until after evaluating all its
-  subexpressions)
+  subexpressions) [x]
 - evaluated arguments (from creation within eval/apply until after env is
-  extended by a frame with them)
+  extended by a frame with them) [x]
 - extended environment (from creation within eval/apply until after apply is
-  finished and we return the value to the calling function)
+  finished and we return the value to the calling function) [x]
 - pairs created from primitive procedure calls (e.g. cons, list) (from
-  creation anywhere within eval/apply to end of REPL cycle)
+  creation anywhere within eval/apply to end of REPL cycle) (or is it to
+  return of calling function?) []
+
+If we can guarantee that these will be preserved across swaps between free
+and working memory, we should be fine. Any pointer variable that refers to
+one of the pairs in memory will be redirected with a broken heart.
 
 
 ### Overview of features added:

@@ -4,6 +4,7 @@
 static void read_eval_print_loop(void);
 
 Boolean verbosity;
+Pair *input_ptr;
 
 int main(int argc, const char *argv[])
 {

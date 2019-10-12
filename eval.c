@@ -10,7 +10,7 @@ static Boolean special_form(char *, const Element);
 
 static Element make_procedure(const Element, const Element);
 static Element apply(const Element, const Element);
-static Element list_of_values(const Element, const Element);
+static Element list_of_values(Element, const Element);
 static Element make_procedure(const Element, const Element);
 static Element apply_compound(const Element, Pair *);
 static Element eval_sequence(const Element, const Element);
@@ -89,10 +89,6 @@ Element apply(const Element exp, const Element env)
 {
   Element procedure;
   Pair *arguments;
-  Element e = {
-    .type_tag = PAIR,
-    .contents.pair_ptr = NULL
-  };
 
   // Since these single-use abstractions are just aliases, let's just
   // define them within this function.
@@ -129,22 +125,40 @@ Element apply(const Element exp, const Element env)
   return procedure;
 }
 
-Element list_of_values(const Element operands, const Element env)
+Element list_of_values(Element operands, const Element env)
 {
-  Element e = {
+  Element empty = {
     .type_tag = PAIR,
     .contents.pair_ptr = NULL
   };
 
   if (!operands.contents.pair_ptr) {
-    return e;
+    return empty;
   }
 
-  // Instead of defer argument evaluation order to the C compiled to decide,
-  // we can choose to explicitly set the order to left-to-right.
-  e = eval_dispatch(car(operands), env);
+  Pair *p = get_next_free_ptr();
 
-  return make_cons(e, list_of_values(cdr(operands), env));
+  Element e = {
+    .type_tag = PAIR,
+    .contents.pair_ptr = p
+  };
+
+  save(p);
+
+  p->car = clone(eval_dispatch(car(operands), env));
+
+  while (cdr(operands).contents.pair_ptr) {
+    p->cdr.contents.pair_ptr = get_next_free_ptr();
+    p = p->cdr.contents.pair_ptr;
+    operands = cdr(operands);
+    p->car = clone(eval_dispatch(car(operands), env));
+  }
+
+  forget();
+
+  p->cdr = empty;
+
+  return e;
 }
 
 Element make_procedure(const Element exp, const Element env)
@@ -170,13 +184,26 @@ Element apply_compound(const Element procedure, Pair *arguments)
     .contents.pair_ptr = arguments
   };
 
-  return eval_sequence(
-    procedure_body(procedure),
-    extend_environment(
-      make_frame(procedure_parameters(procedure), e),
-      procedure_environment(procedure)
-    )
-  );
+  // Use e to hold frame.
+  e = make_frame(procedure_parameters(procedure), e);
+
+  save(e.contents.pair_ptr);
+
+  // Use e to hold env.
+  e = extend_environment(e, procedure_environment(procedure));
+
+  // Update saved pointer for GC from preserving frame to preserving env.
+  forget();
+  save(e.contents.pair_ptr);
+
+  // Use e to hold return value.
+  e = eval_sequence(procedure_body(procedure), e);
+
+  // Once we finish evaluating the compound procedure application, the env
+  // is safe to discard, so we remove it from GC preservation.
+  forget();
+
+  return e;
 }
 
 // The compiler may perform tail-call optimization here. But we should
