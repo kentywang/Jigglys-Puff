@@ -43,7 +43,8 @@ struct element {
     // The following are never read from input, and are never exposed to
     // users:
     PRIMITIVE_PROCEDURE,
-    COMPOUND_PROCEDURE
+    COMPOUND_PROCEDURE,
+    BROKEN_HEART,
   } type_tag;
   union {
     Pair *pair_ptr;
@@ -53,6 +54,7 @@ struct element {
     // PRIMITIVE_PROCEDURE uses a Pair pointer like PAIR.
     Element (*func_ptr)(const Pair *);
     // Need to store string too.
+    // BROKEN_HEART uses a Pair pointer like PAIR.
   } contents;
 };
 
@@ -82,6 +84,7 @@ extern Element eval_dispatch(const Element, const Element);
 extern void print_element(const Element);
 
 /* stack.c */
+extern int cons_pointers;
 extern void save(Pair *);
 extern void forget(void);
 

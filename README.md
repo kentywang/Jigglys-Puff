@@ -90,13 +90,24 @@ There's 5 classes of data on the heap with varying lifespans:
 - extended environment (from creation within eval/apply until after apply is
   finished and we return the value to the calling function) [x]
 - pairs created from primitive procedure calls (e.g. cons, list) (from
-  creation anywhere within eval/apply to end of REPL cycle) (or is it to
-  return of calling function?) []
+  creation anywhere within eval/apply to return of calling function，since
+  if it's passed to another function then its reference is preserved in its
+  extendend environment) []
+- the return value, if it's a Pair pointer.
 
 If we can guarantee that these will be preserved across swaps between free
 and working memory, we should be fine. Any pointer variable that refers to
 one of the pairs in memory will be redirected with a broken heart.
 
+Currently I've implemented a simplified GC for objects created during
+procedure application, where all objects are persisted in memory until the
+application is over. This can be optimized to only persist what is needed
+(what's referenced by variables). I don't think we need to persist the return
+value since that'll be the evaluated argument of any subsequent application.
+
+Wait... couldn't we just add all defined variables to the stack and remove
+them upon scope ending, instead of preserving all conses within an
+application? Not sure how this would work with lexical scoping though.
 
 ### Overview of features added:
 - Verbose option for tracing evaluation (WIP)

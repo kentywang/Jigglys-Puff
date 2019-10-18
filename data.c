@@ -54,6 +54,8 @@ thus always has a car and cdr.
 */
 Element make_list(const Pair *p)
 {
+  Element e;
+
   if (p->cdr.type_tag == PAIR && !p->cdr.contents.pair_ptr) {
     Element e = {
       .type_tag = PAIR,
@@ -61,10 +63,15 @@ Element make_list(const Pair *p)
     };
 
     // Any empty list is interchangeable with another.
-    return make_cons(p->car, e);
+    e = make_cons(p->car, e);
   }
 
-  return make_cons(p->car, make_list(p->cdr.contents.pair_ptr));
+  e = make_cons(p->car, make_list(p->cdr.contents.pair_ptr));
+
+  save(e.contents.pair_ptr);
+  ++cons_pointers;
+
+  return e;
 }
 
 Element clone(const Element x)

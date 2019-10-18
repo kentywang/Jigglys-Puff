@@ -199,6 +199,10 @@ Element apply_compound(const Element procedure, Pair *arguments)
   // Use e to hold return value.
   e = eval_sequence(procedure_body(procedure), e);
 
+  // Release any cons created in procedure application.
+  while (cons_pointers--)
+    forget();
+
   // Once we finish evaluating the compound procedure application, the env
   // is safe to discard, so we remove it from GC preservation.
   forget();

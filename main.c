@@ -48,7 +48,7 @@ void read_eval_print_loop(void)
     // printf("ENV:\n");
     // print_element(env);
 
-    // Free memory step?
+    // Free memory step?      
   }
 
   forget(); // Release global env from memory (not strictly needed here).
